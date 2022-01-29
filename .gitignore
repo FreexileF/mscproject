@@ -1,0 +1,6 @@
+*.txt
+*.log
+*.org
+
+__pycache__
+.vscode
