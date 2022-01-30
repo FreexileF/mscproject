@@ -2,5 +2,6 @@
 *.log
 *.org
 
+tkinter-practice
 __pycache__
 .vscode

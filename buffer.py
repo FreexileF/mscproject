@@ -1,4 +1,3 @@
-import abc
 import editor_shared as e
 import fileIO
 import display as dspl
@@ -95,12 +94,7 @@ class ListBuffer(BufferInterface):
             self.blines[k+1] = originln[i:]
             # ml.warn("Buf = %s" % "\r\n".join(self.blines))
         self.chgdflag = True
-
-# 0 mkalf
-# 1        k = 1
-# 2 lafdj
-# 3 
-
+        
     def delchar(self, k, i):
         originln = self.blines[k] 
         self.blines[k] = originln[:i-1] + originln[i:]
@@ -135,3 +129,4 @@ def switchbuf(b: ListBuffer):
 
 def bufferlist():
     pass
+

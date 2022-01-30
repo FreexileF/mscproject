@@ -1,49 +1,57 @@
-from textwrap import fill
+
 from tkinter import *
-from tkinter import scrolledtext
+import tkinter
+from tkinter import font
 from tkinter import filedialog
 from tkinter import messagebox
-from tkinter.font import Font
+from tkinter import ttk
 from tkinter.ttk import *
 import os
-from tokenize import String
+from tracemalloc import start
 
-from more_itertools import value_chain
 class editorTab(Frame):
     def __init__(self, root, name) -> None:
         Frame.__init__(self,root)
 
         self.root = root
-        self.name = StringVar(value=name)
+        self.name = name
 
         self.fontfamily = StringVar()
         self.fontfamily.set("Courier New")
         self.fontsize = 14
-        self.textfont = Font(family=self.fontfamily, size=self.fontsize)
-        
+        self.textfont = font.Font(family=self.fontfamily, size=self.fontsize)
         self.bgcolour = StringVar(value= "white")
-        self.line_number_bar = scrolledtext.ScrolledText(self, width=4, padx=3, takefocus=0, border=0,
-                            background='#F0E68C', state='disabled')
 
 
+        self.line_number_bar = Text(self, width=4, padx=3, takefocus=0, border=0,
+                            background='#F0E68C', state='disabled', font=self.textfont)
         self.line_number_bar.pack(side='left', fill='y')    
 
-        self.textarea = Text(self, wrap=WORD, undo=True, font=self.textfont)
-        t_scrlbar=Scrollbar(self.textarea, orient='vertical', command=self.textarea.yview)
-        t_scrlbar.pack(side="right", fill='y')
-        self.textarea.config(yscrollcommand=t_scrlbar.set)
+        # self.textarea = scrolledtext.ScrolledText(self, wrap=WORD, undo=True, font=self.textfont)
+        self.textarea = Text(self, wrap="word", undo=True, font=self.textfont)
         self.textarea.pack(expand="yes", fill="both")
+        
+        t_scrlbar=Scrollbar(self.textarea, orient=VERTICAL)
+        t_scrlbar['command'] = self.scrollboth
+        #well this seems a bit unusual, because the following statement must 
+        #apper BEFORE registering the scrollbar to window manager
 
-        def scrollboth():
-            self.line_number_bar.see(self.textarea.yview())
+        self.textarea["yscrollcommand"]=t_scrlbar.set
+        t_scrlbar.pack(side="right", fill='y')
 
-        self.textarea.config(yscrollcommand=self.line_number_bar.yview())
+    def set_bind(self):
+            self.textarea.bind("<Control-o>", self.open_file)
+            self.textarea.bind("<Control-a>", self.sel_all)
+            # self.textarea.bind("<Control-x>", self.)
+
+    def scrollboth(self, *args):
+        self.textarea.yview(*args)
+        self.line_number_bar.yview(*args)
 
 
     def update_linenum(self, show=True):
         if show:
             row, _ = self.textarea.index("end").split('.')
-            print("row = %s" % row)
             line_num_content = "\n".join([str(i) for i in range(1, int(row))])
             self.line_number_bar.config(state='normal')
             self.line_number_bar.delete('1.0', 'end')
@@ -53,7 +61,60 @@ class editorTab(Frame):
             self.line_number_bar.config(state='normal')
             self.line_number_bar.delete('1.0', 'end')
             self.line_number_bar.config(state='disabled')    
+        
+    def find_text(self, event=None):
+        search_toplevel = Toplevel(self)
+        search_toplevel.title('Search')
+        #On top of other windows
+        search_toplevel.transient(self)
+        search_toplevel.resizable(False, False)
+        Label(search_toplevel, text="Search:").grid(row=0, column=0, sticky='e')
+        search_entry_widget = Entry(search_toplevel, width=25)
+        search_entry_widget.grid(row=0, column=1, padx=2, pady=2, sticky='we')
+        search_entry_widget.focus_set()
+        case_sensitive = IntVar()
+        Checkbutton(search_toplevel, 
+                    text='case insensitive',
+                    variable=case_sensitive).grid(
+                    row=1, column=1, sticky='e', padx=2, pady=2)
+
+        Button(
+            search_toplevel, 
+            text="Search",
+            command= lambda: self.search_result(
+                search_entry_widget.get(), 
+                case_sensitive.get(), 
+                search_toplevel, 
+                search_entry_widget)
+                ).grid(row=0, column=2, sticky='e' + 'w', padx=2, pady=2)
+
+        def close_search_window():
+            self.textarea.tag_remove('match', '1.0', "end")
+            search_toplevel.destroy()
+
+        search_toplevel.protocol('WM_DELETE_WINDOW', close_search_window)
+
+    def search_result(self, key, ignore_case, search_toplevel, search_box):
+        self.textarea.tag_remove('match', '1.0', "end")
+        matches_found = 0
+        if key:
+            start_pos = "1.0"
+            while True:
+                start_pos = self.textarea.search(key, start_pos, nocase=ignore_case, stopindex="end")
+                print("start pos=%s" % start_pos)
+                if not start_pos:
+                    break
+                end_pos = '{}+{}c'.format(start_pos, len(key))
+                self.textarea.tag_add('match', start_pos, end_pos)
+                matches_found += 1
+                start_pos = end_pos
+            self.textarea.tag_config('match', foreground='green', background='yellow')
+        search_box.focus_set()
+        search_toplevel.title('Found %d matched result.' % matches_found)
     
+    def sel_all(self, event=None):
+        self.textarea.tag_add('sel', '1.0', 'end')
+        return "break"
 class editor(Tk):
     def __init__(self) -> None:
         super().__init__()
@@ -65,45 +126,48 @@ class editor(Tk):
         
 
     def open_file(self, event="None"):
-        print("open_file() is called.")
         input_file = filedialog.askopenfilename()
-        fbasename = os.path.basename(input_file)
+        fname = os.path.basename(input_file)
         if input_file:
             self.cur_tab().textarea.delete(1.0, END)
-            self.notebook.tab(self.cur_tab(), text= fbasename)
+
+            # self.cur_tab().name=fname
+            self.notebook.tab(self.cur_tab(), text=fname)
+            # self.add_tab(input_file)
+            # self.notebook.select(END)
+            # self.cur_tab().textarea.delete(1.0, END)
             with open(input_file, 'r') as f:
                 self.cur_tab().textarea.insert(1.0, f.read())
-        self.cur_tab().update_linenum()
+                self.cur_tab().update_linenum()
 
     def cur_textarea(self):
         return self.cur_tab().textarea
 
     def save(self, event=None):
-        print("Tab's name=" + self.cur_tab().name)
         if not self.cur_tab().name:
             self.save_as()
         else:
-            self.write_file(self.cur_tab().name)
+            self.write_file(self.cur_tab().name())
     
     def save_as(self, event=None):
         input_file = filedialog.asksaveasfilename(
             filetypes=[("All Files", "*.*"), ("Text files", "*.txt")])
         if input_file:
-            self.cur_tab().name = input_file
+            self.notebook.tab(self.cur_tab(), text= input_file)
             self.write_file(self.cur_tab().name)
 
     def write_file(self, file_name):
         try:
-            fname = self.cur_tab().name
             content = self.cur_tab().textarea.get(1.0, 'end')
-            with open(fname, 'w') as f:
+            with open(file_name, 'w') as f:
                 f.write(content)
         except IOError:
-            messagebox.showwarning("Save", "File saving failed")  
+            pass
 
     def exit_editor(self):
-        if messagebox.askokcancel("D"):
-            self.destroy()
+        if self.cur_tab().textarea.edit_modified():
+            if messagebox.askokcancel(title="Exit", message="Modified files exits, exit anyway?"):
+                self.destroy()
 
     def set_window(self):
         self.title("Notepad--")
@@ -134,13 +198,13 @@ class editor(Tk):
 
 
         edit_menu.add_command(label='undo', command=self.handle_menu_action('undo'), accelerator='Ctrl+Z')
-        edit_menu.add_command(label='redo', accelerator='Ctrl+Y')
+        edit_menu.add_command(label='redo', command=self.handle_menu_action('redo'), accelerator='Ctrl+Y')
         edit_menu.add_separator()
-        edit_menu.add_command(label='cut', accelerator='Ctrl+X')
-        edit_menu.add_command(label='copy', accelerator='Ctrl+C')
-        edit_menu.add_command(label='paste', accelerator='Ctrl+V')
+        edit_menu.add_command(label='cut',command=self.handle_menu_action("cut"), accelerator='Ctrl+X')
+        edit_menu.add_command(label='copy', command=self.handle_menu_action("copy"), accelerator='Ctrl+C')
+        edit_menu.add_command(label='paste', command=self.handle_menu_action('paste'), accelerator='Ctrl+V')
         edit_menu.add_separator()
-        edit_menu.add_command(label='find', accelerator='Ctrl+F')
+        edit_menu.add_command(label='find', command=self.cur_tab().find_text, accelerator='Ctrl+F')
         edit_menu.add_separator()
         edit_menu.add_command(label='select all', accelerator='Ctrl+A')
         menu_bar.add_cascade(label='Edit', menu=edit_menu)
@@ -176,7 +240,8 @@ class editor(Tk):
         self.tabs = {'ky': 0}
         #Keep a record of the open tabs in a list.
         self.tab_list = []
-        self.notebook = Notebook(self)
+        self.notebook = ttk.Notebook(self)
+
         self.notebook.pack(expand = True, fill= 'both')
 
 
@@ -188,12 +253,8 @@ class editor(Tk):
         tab = editorTab(self.notebook, name)
         self.notebook.add(tab, text=name)
         self.tab_list.append(tab)
-        tab.textarea.bind("<Control-o>", self.open_file)
-        tab.textarea.bind("<Any-KeyPress>", self.cur_tab().update_linenum)
-    def generate_tab(self):
-        if self.tabs['ky'] < 20:
-            self.tabs['ky'] += 1
-            self.add_tab('Document ' + str(self.tabs['ky']))
+
+        # tab.textarea.bind("<Any-KeyPress>", self.cur_tab().update_linenum)
     
     def handle_menu_action(self, action_type):
         {
@@ -210,5 +271,8 @@ class editor(Tk):
             self.cur_tab().update_linenum()
 
         return "break"
+
+
+
 
 editor().mainloop()
