@@ -1,6 +1,7 @@
-from ast import Str
+
 from cProfile import label
 from tkinter import *
+from tkinter.ttk import *
 from tkinter import filedialog, messagebox
 import tkinter
 from tkinter import font
@@ -11,7 +12,6 @@ import idlelib.colorizer as ic
 import idlelib.percolator  as ip
 
 class editor(Tk):
-    icon_res = []
     file_name = None
 
     def __init__(self):
