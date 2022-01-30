@@ -1,7 +1,12 @@
 import editor_shared as e
 import display as dspl
 import mylog as ml
+import sys
 
+def ml_prompt(s):
+    dspl.ml_print(s)
+    while ch := sys.stdin.read(1) != "\r":
+        
 
 def fallines(filename):
     with open(filename) as f:
