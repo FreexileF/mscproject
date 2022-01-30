@@ -1,5 +1,5 @@
+import curses
 import display as dspl
-import atexit
 import sys
 import mylog as ml
 
@@ -7,6 +7,23 @@ ctrl = 0x10000000
 alt = 0x2000000
 ctrlx = 0x40000000
 CSI = 0x80000000
+
+
+def ml_prompt(s):
+    dspl.ml_print(s)
+    res = ""
+    while (ch := sys.stdin.read(1)) != "\r":
+        if ch == chr(127):
+            # handle backspace
+            s = s[:-1]
+            dspl.ml_print(s)
+            continue
+        s += ch
+        res += ch
+        dspl.ml_print(s)
+
+    dspl.ml_print(res)
+    return res
 
 
 def ctoi(k): return ord(k) if isinstance(k, str) else k
@@ -43,7 +60,7 @@ def gets():
     '''
     Input a string ending up with Enter.
 
-    This should have been a trivial function, but the don't forget 
+    This should have been a trivial function, but the don't forget
     console is in Raw mode which makes things a bit different.
     '''
     s = ""
@@ -62,6 +79,7 @@ def get_onekey():
 
 
 def get_command():
+
     '''
     TODO: BUG: should add timeout detecting maybe
     '''
@@ -79,10 +97,10 @@ def get_command():
         if c == ord('['):
             c = get_onekey()
             return CSI | c
-        # force uppercase
+    # force uppercase
         if c >= ord('a') and c <= ord('z'):
             c -= 32
-# ESC[
+    # ESC[
         if is_control(c):
             return M_(C_(c))
 
@@ -95,16 +113,17 @@ def get_command():
 
 def cmd2str(command):
 
+
     cmdstr = ""
     if command & CSI != 0:
         command &= ~CSI
-        cmdstr = "ESC[" + cmdstr
+    cmdstr = "ESC[" + cmdstr
     if command & ctrlx != 0:
         command &= ~ctrlx
-        cmdstr = "C-X " + cmdstr
+    cmdstr = "C-X " + cmdstr
     if command & alt != 0:
         command &= ~alt
-        cmdstr = cmdstr + "M-"
+    cmdstr = cmdstr + "M-"
     if command & ctrl != 0:
         command &= ~ctrl
         cmdstr = cmdstr + "C-"
@@ -115,7 +134,6 @@ def cmd2str(command):
 
 if __name__ == "__main__":
     # i = 1
-    import curses
     curses.initscr()
 
     curses.cbreak()
@@ -123,9 +141,11 @@ if __name__ == "__main__":
     while True:
         # t.enableRaw()
         c = get_command()
-        # print(i, end='\r\n')
-        print(cmd2str(c), end='\r\n')
-        # i += 1
+        s = ml_prompt("Try:")
+        ml.warn("Prompt s = %s" % s)
+    # print(i, end='\r\n')
+    # print(cmd2str(c), end='\r\n')
+    # i += 1
         if c == ord('q'):
             # t.restore()
             curses.endwin()

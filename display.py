@@ -6,8 +6,9 @@ msgline  = None
 
 
 def init():
-    global msgline
     curses.initscr()
+    global msgline
+
     curses.raw()
     curses.nonl()
     curses.noecho()
@@ -39,6 +40,7 @@ def ml_print(s):
     msgline.erase()
     msgline.addstr(s)
     msgline.refresh()
+    msgline.erase()
 
 def showversion(_):
     ml_print(e.PROGRAM_NAME + " " + e.PROGRAM_VERSION)
@@ -46,7 +48,7 @@ def showversion(_):
 def upd_allw():
     wp = e.headw
     while wp != None:
-
+        lg.warn("Now winsize = %d %d" %(e.curw.nrow, e.curw.ncol))
         wp.update()
         wp = wp.wnext
 
@@ -54,17 +56,17 @@ def hw_update():
     e.curw.mvcursor(e.curw.cy - e.curw.yof, e.curw.cx - e.curw.xof)
     curses.doupdate()
 
-def splitw(_):
-    w: CursesWindow = e.curw
-    if w.nrow < 3:
-        return
-    uppernrow = w.nrow // 2
-    lowerrow = w.nrow - uppernrow
-    w.resize(uppernrow, w.ncol)
-    newwnd = CursesWindow(lowerrow, w.ncol, w.bgny +
-                          uppernrow, w.bgnx, w.usebuf, w.wnext)
-    newwnd.yof, newwnd.xof = w.yof, w.xof
-    w.wnext = newwnd
+# def splitw(_):
+#     w: CursesWindow = e.curw
+#     if w.nrow < 3:
+#         return
+#     uppernrow = w.nrow // 2
+#     lowerrow = w.nrow - uppernrow
+#     w.resize(uppernrow, w.ncol)
+#     newwnd = CursesWindow(lowerrow, w.ncol, w.bgny +
+#                           uppernrow, w.bgnx, w.usebuf, w.wnext)
+#     newwnd.yof, newwnd.xof = w.yof, w.xof
+#     w.wnext = newwnd
 
 def rightchar(n):
     for _ in range(n):
@@ -100,13 +102,14 @@ class CursesWindow:
         self.yof, self.xof = 0, 0
 
         self.curseswnd: curses._CursesWindow = curses.newwin(nrow, ncol, bgny, bgnx)
-
+        lg.warn("New Window %d %d" % (self.nrow, self.ncol))
         self.view: list[str] = []
         self.modestr: str = ""
         
     def upd_mode(self):
         stat = "Modified" if self.usebuf.chgdflag else " "
-        self.modestr = "%s : %s (%s)" % (e.PROGRAM_NAME, self.usebuf.bname, stat)
+        focus = "***" if self == e.curw else "   "
+        self.modestr = "%s %s : %s (%s)" % (focus, e.PROGRAM_NAME, self.usebuf.bname, stat)
 
     def upd_view(self):
         #Depending on the size of window, extact text from buffer
@@ -115,6 +118,7 @@ class CursesWindow:
         for i in range(viewnrow):
             try:
                 wln = self.usebuf.getline(i + self.yof)
+                lg.warn("Updview(): %d %d" %(i, self.yof))
                 if len(wln) > viewncol:
                     wln = wln[:viewncol]
                 newview.append(wln)
@@ -127,7 +131,10 @@ class CursesWindow:
         self.view = newview
 
     def writeln(self, i, ln, atrr = curses.A_NORMAL):
-        self.curseswnd.addstr(i, 0, ln, atrr)
+        try:
+            self.curseswnd.addstr(i, 0, ln, atrr)
+        except Exception as e:
+            lg.warn("write line %d: %s" % (i, ln))
 
     def mvcursor(self, y, x):
 
@@ -195,6 +202,7 @@ class CursesWindow:
 
     def resize(self, newnrow, newncol):
         self.nrow, self.ncol = newnrow, newncol
+        self.textnrow = self.nrow-1
         self.curseswnd.resize(newnrow, newncol)
 
     def reframe(self):
@@ -220,5 +228,19 @@ class CursesWindow:
 
 
 
-    def splitw(self):
-        pass
+def splitw_vt(_):
+    w: CursesWindow = e.curw
+    if w.nrow < 3:
+        return
+    uppernrow = w.nrow // 2
+    lowerrow = w.nrow - uppernrow
+    w.resize(uppernrow, w.ncol)
+    newwnd = CursesWindow(lowerrow, w.ncol, w.bgny +
+                          uppernrow, w.bgnx, w.usebuf, w.wnext)
+    w.wnext = newwnd
+
+def other_w(_):
+    if e.curw.wnext != None:
+        e.curw = e.curw.wnext
+    else:
+        e.curw = e.headw

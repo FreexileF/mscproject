@@ -1,4 +1,5 @@
 import editor_shared as e
+import input
 import fileIO
 import display as dspl
 import mylog as ml
@@ -116,17 +117,19 @@ class ListBuffer(BufferInterface):
 def init(fname=""):
     if fname != "":
         e.curb = ListBuffer(fname, None, fname)
-        fileIO.cb_openfile(fname)
+        # e.cur = e.curw.usebuf
+        e.curb.blines = [l.strip() for l in fileIO.fallines(fname)]
     else:
         e.curb = ListBuffer("scratch", ["#Here is your scratch."], "")
 
     e.buffer_table = {e.curb.bname: e.curb}
 
 
-def switchbuf(b: ListBuffer):
-    e.curb = b
+# def switchbuf(b: ListBuffer):
+#     e.curb = b
 
-
-def bufferlist():
-    pass
-
+def load_file(_):
+    openf = input.ml_prompt("File:")
+    flines = [l.strip() for l in fileIO.fallines(openf)]
+    e.curw.usebuf= ListBuffer(openf, flines, openf)
+    e.curw.mvcursor(0, 0)

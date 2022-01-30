@@ -1,7 +1,8 @@
 
+from cmath import exp
 import display as dspl
 import sys, buffer, input,fileIO
-from input import is_ascii, is_control
+from input import C_x_, is_ascii, is_control
 import keybinding as kbd
 import editor_shared as e
 import mylog as ml
@@ -30,6 +31,9 @@ def fetch_exec(c: int):
             e.curb.delchar(*e.curw.absyx())
             dspl.leftchar(1)
         e.uni_arg = 1
+    #test ml_prompt()
+    elif c == input.C_x_(input.C_("P")):
+        ml.warn(input.ml_prompt("TRY:"))
     elif kbd.is_bound(c):
         cmd = kbd.binding_table[c]
         ml.warn(cmd)
@@ -44,13 +48,14 @@ def fetch_exec(c: int):
     
 
 def editor_init():
+
     if len(sys.argv) >= 2:
         buffer.init(sys.argv[1])
 
     else:
         buffer.init()
-
     dspl.init()
+
 
 
 def editor_main():
@@ -69,20 +74,24 @@ def editor_exit(_ = None):
 
 cmd_func_table = {
   "show-version":   dspl.showversion,
-  "split-window":   dspl.splitw,
+#   "split-window":   dspl.splitw,
   "editor-exit":    editor_exit,
   "save-buffer":    fileIO.cb_save,
   "next-line":      dspl.nextline,
   "previous-line":  dspl.prevline,
   "right-char":     dspl.rightchar,
   "left-char":      dspl.leftchar,
-#   "other-window":   dspl.otherwindow,
+  "split-window-vt": dspl.splitw_vt,
+  "other-window":   dspl.other_w,
+  "load-file":        buffer.load_file
 #   "open-line":      buffer.insnl
 }
 
 if __name__ == "__main__":
     try:
         editor_main()
-    except Exception:
+    except Exception as e:
         #do neccessary clean up
+        ml.warn(str(e))
         editor_exit()
+editor_exit()

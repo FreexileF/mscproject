@@ -3,10 +3,6 @@ import display as dspl
 import mylog as ml
 import sys
 
-def ml_prompt(s):
-    dspl.ml_print(s)
-    while ch := sys.stdin.read(1) != "\r":
-        
 
 def fallines(filename):
     with open(filename) as f:
@@ -32,13 +28,13 @@ def fwrite(filename, s):
 
 
 def cb_save(_):
-    numCharsWrited = fwrite(e.curb.fname, e.curb.to_str())
+    numCharsWrited = fwrite(e.curw.usebuf.fname, e.curw.usebuf.to_str())
     dspl.ml_print(str(numCharsWrited) + " characters wrote.")
 
 
 def cb_openfile(filename):
     f = fallines(filename)
-    e.curb.blines = [ln.rstrip() for ln in f]
+    e.curw.usebuf.blines = [ln.rstrip() for ln in f]
 
 
 def cb_appendfile(filename):

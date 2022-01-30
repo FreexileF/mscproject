@@ -40,7 +40,7 @@ class editorTab(Frame):
         t_scrlbar.pack(side="right", fill='y')
 
     def set_bind(self):
-            self.textarea.bind("<Control-o>", self.open_file)
+
             self.textarea.bind("<Control-a>", self.sel_all)
             # self.textarea.bind("<Control-x>", self.)
 
