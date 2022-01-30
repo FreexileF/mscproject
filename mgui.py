@@ -1,3 +1,4 @@
+from textwrap import fill
 from tkinter import *
 from tkinter import scrolledtext
 from tkinter import filedialog
@@ -21,14 +22,23 @@ class editorTab(Frame):
         self.textfont = Font(family=self.fontfamily, size=self.fontsize)
         
         self.bgcolour = StringVar(value= "white")
-        self.line_number_bar = Text(self, width=4, padx=3, takefocus=0, border=0,
+        self.line_number_bar = scrolledtext.ScrolledText(self, width=4, padx=3, takefocus=0, border=0,
                             background='#F0E68C', state='disabled')
+
 
         self.line_number_bar.pack(side='left', fill='y')    
 
-        self.textarea = scrolledtext.ScrolledText(self, wrap=WORD, undo=True, font=self.textfont)
+        self.textarea = Text(self, wrap=WORD, undo=True, font=self.textfont)
+        t_scrlbar=Scrollbar(self.textarea, orient='vertical', command=self.textarea.yview)
+        t_scrlbar.pack(side="right", fill='y')
+        self.textarea.config(yscrollcommand=t_scrlbar.set)
         self.textarea.pack(expand="yes", fill="both")
-    
+
+        def scrollboth():
+            self.line_number_bar.see(self.textarea.yview())
+
+        self.textarea.config(yscrollcommand=self.line_number_bar.yview())
+
 
     def update_linenum(self, show=True):
         if show:
