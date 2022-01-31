@@ -1,7 +1,6 @@
 import editor_shared as e
 import input
 import fileIO
-import display as dspl
 import mylog as ml
 
 
@@ -77,8 +76,10 @@ class ListBuffer(BufferInterface):
 
     def insnl(self, k, i):
         # if point is at the end of a line:
+        ml.warn("line %d = %s, Insert at %d" %(k, self.blines[k], i))
+
         if i == len(self.blines[k]):
-            self.blines.insert(k, "")
+            self.blines.insert(k+1, "")
         
         #if point is at the beginning of a line,
         elif i == 0:
@@ -97,12 +98,23 @@ class ListBuffer(BufferInterface):
         self.chgdflag = True
         
     def delchar(self, k, i):
+        if k == 0 and i == 0:
+            return False
+        if i == 0:
+            lk = self.blines.pop(k)
+            self.blines[k-1] += lk
+            return True
         originln = self.blines[k] 
+        ml.warn("del char in %d %d" %(k, i))
         self.blines[k] = originln[:i-1] + originln[i:]
         self.chgdflag = True
-
+        return True
     # def delline(self, k):
     #     pass
+    def deltoeol(self, k,  i):
+        orig = self.blines[k]
+        self.blines[k] = orig[:i]
+        self.chgdflag = True
 
     def getline(self, k):
         if k >= len(self.blines):
@@ -124,7 +136,10 @@ def init(fname=""):
 
     e.buffer_table = {e.curb.bname: e.curb}
 
-
+def kill_to_eol(_):
+    b: ListBuffer  = e.curw.usebuf
+    b.deltoeol(e.curw.cy, e.curw.cx)
+    b.chgdflag =True
 # def switchbuf(b: ListBuffer):
 #     e.curb = b
 
@@ -132,4 +147,4 @@ def load_file(_):
     openf = input.ml_prompt("File:")
     flines = [l.strip() for l in fileIO.fallines(openf)]
     e.curw.usebuf= ListBuffer(openf, flines, openf)
-    e.curw.mvcursor(0, 0)
+    e.curw.cy, e.curw.cx = 0, 0

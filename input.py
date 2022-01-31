@@ -8,6 +8,8 @@ alt = 0x2000000
 ctrlx = 0x40000000
 CSI = 0x80000000
 
+def ml_yesorno(ask):
+    return ml_prompt(ask + "y, yes, n, no:") in ("yes", 'y', 'no', 'n')
 
 def ml_prompt(s):
     dspl.ml_print(s)
@@ -16,6 +18,7 @@ def ml_prompt(s):
         if ch == chr(127):
             # handle backspace
             s = s[:-1]
+            res=res[:-1]
             dspl.ml_print(s)
             continue
         s += ch

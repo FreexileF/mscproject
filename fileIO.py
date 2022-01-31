@@ -1,7 +1,7 @@
 import editor_shared as e
 import display as dspl
+from input import ml_prompt
 import mylog as ml
-import sys
 
 
 def fallines(filename):
@@ -29,14 +29,19 @@ def fwrite(filename, s):
 
 def cb_save(_):
     numCharsWrited = fwrite(e.curw.usebuf.fname, e.curw.usebuf.to_str())
+    e.curw.usebuf.chgdflag = False
     dspl.ml_print(str(numCharsWrited) + " characters wrote.")
 
+def save_as(_):
+    fname = ml_prompt("Save as:")
+    with open(fname, 'w') as f :
+        dspl.ml_print("%d characters wrote." % f.write(e.curw.usebuf.to_str()))
 
 def cb_openfile(filename):
     f = fallines(filename)
     e.curw.usebuf.blines = [ln.rstrip() for ln in f]
 
 
-def cb_appendfile(filename):
-    newlines = fallines(filename)
-    e.curb.blines += [ln.rstrip() for ln in newlines]
+# def cb_appendfile(filename):
+#     newlines = fallines(filename)
+#     e.curb.blines += [ln.rstrip() for ln in newlines]

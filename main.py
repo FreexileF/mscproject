@@ -1,8 +1,7 @@
 
-from cmath import exp
 import display as dspl
 import sys, buffer, input,fileIO
-from input import C_x_, is_ascii, is_control
+from input import C_x_, is_ascii, is_control, ml_prompt, ml_yesorno
 import keybinding as kbd
 import editor_shared as e
 import mylog as ml
@@ -14,29 +13,30 @@ def fetch_exec(c: int):
     
     if is_ascii(c):
         for _ in range(e.uni_arg):
-            e.curb.insstr(*e.curw.absyx(), chr(c))
+            e.curw.usebuf.insstr(*e.curw.absyx(), chr(c))
             dspl.rightchar(1)
         e.uni_arg = 1
 
-    #Enter
-    elif c == input.C_("M"):
-        e.curb.insnl(*e.curw.absyx())
-        dspl.rightchar(1)
+    #Enter or C-O
+    elif c == input.C_("M") or c == input.C_('O'):
+        e.curw.usebuf.insnl(*e.curw.absyx())
+        dspl.bol(1)
+        dspl.nextline(1)
     elif c == input.C_("U"):
-        e.uni_arg = int(sys.stdin.read(1))
-        dspl.ml_print("Arg = %d" % e.uni_arg)
+        e.uni_arg = int(input.ml_prompt("set arg to:"))
+        dspl.ml_print("universal arg= %d" % e.uni_arg)
     #Backspace
     elif c == 0x7f:
         for _ in range(e.uni_arg):
-            e.curb.delchar(*e.curw.absyx())
-            dspl.leftchar(1)
+            #If nothing to delete don't move the cursor
+            if e.curb.delchar(*e.curw.absyx()):
+                dspl.leftchar(1)
         e.uni_arg = 1
     #test ml_prompt()
     elif c == input.C_x_(input.C_("P")):
         ml.warn(input.ml_prompt("TRY:"))
     elif kbd.is_bound(c):
         cmd = kbd.binding_table[c]
-        ml.warn(cmd)
 
         f = cmd_func_table[cmd]
 
@@ -68,6 +68,10 @@ def editor_main():
 
 
 def editor_exit(_ = None):
+
+    if e.curw.usebuf != None and e.curw.usebuf.chgdflag:
+        if not ml_yesorno("Modified Buffer exist anyway?"):
+            return 
     dspl.cleanup()
     sys.exit()
 
@@ -83,8 +87,16 @@ cmd_func_table = {
   "left-char":      dspl.leftchar,
   "split-window-vt": dspl.splitw_vt,
   "other-window":   dspl.other_w,
-  "load-file":        buffer.load_file
-#   "open-line":      buffer.insnl
+  "load-file":        buffer.load_file,
+  "begin-of-line":  dspl.bol,
+  "end-of-line":    dspl.eol,
+  "open-line":      None,
+  "merge-window":   dspl.mergew,
+  "display-help-message": dspl.show_help,
+  "kill-to-eol":     buffer.kill_to_eol,
+  "page-down":      dspl.page_down,
+  "page-up":        dspl.page_up,
+  "save-as":         fileIO.save_as
 }
 
 if __name__ == "__main__":
@@ -92,6 +104,6 @@ if __name__ == "__main__":
         editor_main()
     except Exception as e:
         #do neccessary clean up
-        ml.warn(str(e))
+        ml.warn("Exception in main(). %s"  % str(e))
         editor_exit()
 editor_exit()

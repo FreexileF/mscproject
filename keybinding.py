@@ -27,5 +27,14 @@ binding_table = {
     C_x_('2'):          "split-window-vt",
     C_x_('3'):          "split-window-hz",
     C_x_("o"):          "other-window",
-    C_x_(C_('F')):      "load-file"
+    C_x_(C_('F')):      "load-file",
+    C_("A"):            'begin-of-line',
+    C_("E"):            'end-of-line',
+    C_x_("1"):          "merge-window",
+    C_("H"):            "display-help-message",
+    C_("K"):            "kill-to-eol",
+    C_("V"):            "page-down",
+    M_("V"):            "page-up",
+    C_("S"):            "save-as"
+    # C_("O"):            'open-line'
 }
