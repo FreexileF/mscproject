@@ -3,7 +3,7 @@ import display as dspl
 from input import ml_prompt
 import mylog as ml
 
-
+#
 def fallines(filename):
     with open(filename) as f:
         return f.readlines()
@@ -45,3 +45,5 @@ def cb_openfile(filename):
 # def cb_appendfile(filename):
 #     newlines = fallines(filename)
 #     e.curb.blines += [ln.rstrip() for ln in newlines]
+
+

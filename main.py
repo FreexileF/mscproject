@@ -5,6 +5,7 @@ from input import C_x_, is_ascii, is_control, ml_prompt, ml_yesorno
 import keybinding as kbd
 import editor_shared as e
 import mylog as ml
+import traceback
 
 
 def fetch_exec(c: int):
@@ -104,6 +105,7 @@ if __name__ == "__main__":
         editor_main()
     except Exception as e:
         #do neccessary clean up
-        ml.warn("Exception in main(). %s"  % str(e))
+        # e.with_traceback()
+        ml.warn("Exception in main(). %s"  % traceback.format_exc())
         editor_exit()
 editor_exit()

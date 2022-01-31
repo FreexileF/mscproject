@@ -19,7 +19,7 @@ binding_table = {
     ARROW_DOWN:         "next-line",
     C_('N'):            "next-line",
     ARROW_UP:           "previous-line",
-    C_('P'):            "prev-line",
+    C_('P'):            "previous-line",
     ARROW_RIGHT:        "right-char",
     C_('F'):            "right-char",
     ARROW_LEFT:         "left-char",
